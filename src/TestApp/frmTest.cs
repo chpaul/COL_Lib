@@ -1,0 +1,149 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
+using COL.MassLib;
+namespace TestApp
+{
+    public partial class frmTest : Form
+    {
+        public frmTest()
+        {
+            InitializeComponent();
+            DT.Columns.Add(Title);
+            DT.Columns.Add(Value1);
+            DT.Columns.Add(Value2);
+            DT.Columns.Add(Value3);
+            DT.Columns.Add(Value4);
+            DT.Columns.Add(Value5);
+            DT.Columns.Add(Value6);
+            DT.Columns.Add(Value7);        
+        }
+        MSScan _scan;
+        DataTable DT = new DataTable();
+        DataColumn Title = new DataColumn("Title", Type.GetType("System.String"));
+        DataColumn Value1 = new DataColumn("Value1/ChargeState", Type.GetType("System.String"));
+        DataColumn Value2 = new DataColumn("MonoisotopicMZ", Type.GetType("System.String"));
+        DataColumn Value3 = new DataColumn("MonoMass", Type.GetType("System.String"));
+        DataColumn Value4 = new DataColumn("ClusterIntesity", Type.GetType("System.String"));
+        DataColumn Value5 = new DataColumn("MostIntenseMass", Type.GetType("System.String"));
+        DataColumn Value6 = new DataColumn("MostIntenseIntensity", Type.GetType("System.String"));
+        DataColumn Value7 = new DataColumn("FitScore", Type.GetType("System.String"));
+        
+
+
+        private void btnReader_Click(object sender, EventArgs e)
+        {
+            RawReader raw = new RawReader(txtFileName.Text, enumRawDataType.raw);
+            for (int i =1; i < 2000; i++)
+            {
+                MSScan s = raw.ReadScan(i);
+                Console.WriteLine(i.ToString());
+            }
+            //ReadScan(Convert.ToInt32(txtScanNo.Text));
+            raw = null;
+            GC.Collect();
+        }
+
+        private void btnBrowse_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                txtFileName.Text = openFileDialog1.FileName;
+            }
+            
+        }
+
+        private void btnDigest_Click(object sender, EventArgs e)
+        {
+            string Seq ="AYDTEVHNVWATHACVPTDPNPQEVELKNVTENFNMWKNNMVEQMHEDIISLWDQSLKPCVKLTPLCVTLNCTDLRNATNGNDTNTTSSSRGMVGGGEMKNCSFNITTNIRGKVQKEYALFYELDIVPIDNKIDRYRLISCNTSVITQACPKVSFEPIPIHYCAPAGFAILKCKDKKFNGKGPCTNVSTVQCTHGIRPVVSTQLLLNGSLAEEEVVIRSANFADNAKVIIVQLNESVEINCTRPNNNTRKSINIGPGRALYTTGEIIGDIRQAHCNLSRAKWNDTLNKIVIKLREQFGNKTIVFKHSSGGDPEIVTHSFNCGGEFFYCNSTQLFNSTWNVTEESNNTVENNTITLPCRIKQIINMWQEVGRAMYAPPIRGQIRCSSNITGLLLTRDGGPEDNKTEVFRPGGGDMRDNWRSELYKYKVVKIEPLGVAPTKAKRRVVQREK";
+            COL.ProtLib.ProteinInfo PInfo = new COL.ProtLib.ProteinInfo("BL", Seq);
+            List<string> Peps = PInfo.CreateCleavage(1, new List<COL.ProtLib.Protease.Type>() { COL.ProtLib.Protease.Type.GlucE, COL.ProtLib.Protease.Type.Trypsin });
+            List<COL.ProtLib.ProteinInfo> FastaProts = COL.ProtLib.FastaReader.ReadFasta(@"E:\Dropbox\gp120\GP120-5_TrypsinGluC_HILIC_120413_01.fasta");
+
+            foreach (COL.ProtLib.ProteinInfo pIn in FastaProts)
+            {
+                bool found = false;                
+                foreach (string pep in Peps)
+                {
+                    if (pIn.Sequence == pep)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found == false)
+                {
+                }
+            }
+
+
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            MassUtility.GetMassPPM(697.006653, 697.0557);
+        }
+        /*private void ReadScan(int argScanNo)
+        {
+            XRawReader raw = new XRawReader(txtFileName.Text);
+            //Class1 cs = new Class1(txtFileName.Text, 1861);
+            //for (int i = 1; i <= raw.NumberOfScans; i++)
+            //{
+            //   // cs = new Class1(txtFileName.Text, i);
+            //    MSScan s = raw.ReadScan(i);
+            //}
+            //MSScan _scan0 = raw.ReadScan(1232);
+           // MSScan _scan1 = raw.ReadScan(1230);
+            //MSScan _scan2 = raw.ReadScan(1232);
+            MSScan _scan = raw.ReadScan(argScanNo);
+            dataGridView1.DataSource = DT;
+            List<string> Sb = new List<string>();
+            Sb.Add("ScanNo:" + _scan.ScanNo.ToString() + ",Time:" + _scan.Time.ToString() + ",MSLevel:" + _scan.MsLevel.ToString() + ",PeakCount:" + _scan.Count.ToString() +
+            ",MinMz:" + _scan.MinMZ.ToString() + "MaxMz:" + _scan.MaxMZ.ToString() + ",MaxIntensity:" + _scan.MaxIntensity.ToString() + ",MinIntensity:" + _scan.MinIntensity.ToString());
+            Sb.Add("ParentScanNo:" + _scan.ParentScanNo.ToString() +  ",Mono Mass:" + _scan.ParentMonoMW.ToString() + ",Mono Mz:" + _scan.ParentMZ.ToString() +
+        ",ScanHeader:" + _scan.ScanHeader + "-,-,-,-,-");//+ _scan.MaxMZ.ToString() + ",MaxIntensity:" + _scan.MaxIntensity.ToString() + ",MinIntensity:" + _scan.MinIntensity.ToString());
+
+
+            for (int i = 0; i < _scan.MSPeaks.Count; i++)
+            {
+                Sb.Add(i.ToString() + "," +
+                              _scan.MSPeaks[i].ChargeState.ToString() + "," +
+                              _scan.MSPeaks[i].MonoisotopicMZ.ToString() + "," +
+                              _scan.MSPeaks[i].MonoMass.ToString() + "," +
+                              _scan.MSPeaks[i].ClusterIntensity.ToString() + "," +
+                              _scan.MSPeaks[i].MostIntenseMass.ToString() + "," +
+                              _scan.MSPeaks[i].MostIntenseIntensity.ToString() + "," +
+                              _scan.MSPeaks[i].FitScore.ToString());
+            }
+            DT.Rows.Clear();
+            foreach (string s in Sb)
+            {
+                string[] tmp = s.Split(',');
+                DataRow row = DT.NewRow();
+                for (int i = 0; i < tmp.Length; i++)
+                {
+                    row[i] = tmp[i];
+                }
+                DT.Rows.Add(row);
+            }
+            
+        }*/
+
+        //private void btnIncreaseScanNo_Click(object sender, EventArgs e)
+        //{
+        //    txtScanNo.Text = (Convert.ToInt32(txtScanNo.Text) + 1).ToString();
+        //    ReadScan(Convert.ToInt32(txtScanNo.Text));
+        //}
+
+        //private void btnDecreaseScanNo_Click(object sender, EventArgs e)
+        //{
+        //    txtScanNo.Text = (Convert.ToInt32(txtScanNo.Text) -1).ToString();
+        //    ReadScan(Convert.ToInt32(txtScanNo.Text));
+        //}
+    }
+}

@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{8F6EB98A-FB4D-4592-AE54-4BA9EB9EB834}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>COL.MassLib</RootNamespace>
+    <AssemblyName>MassLib</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CSMSL, Version=0.3.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\MultiGlycan\lib\CSMSL.dll</HintPath>
+    </Reference>
+    <Reference Include="CSMSL.Thermo, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\MultiGlycan\lib\CSMSL.Thermo.dll</HintPath>
+    </Reference>
+    <Reference Include="DeconEngine">
+      <HintPath>..\..\lib\DeconEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Xml" />
+    <Reference Include="TheoreticalDistribution, Version=1.0.3541.22595, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\TheoreticalDistribution.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Atoms.cs" />
+    <Compile Include="enumGlycanType.cs" />
+    <Compile Include="enumRawDataType.cs" />
+    <Compile Include="Filters\BackgroundFilter.cs" />
+    <Compile Include="Filters\IFilter.cs" />
+    <Compile Include="Filters\PeakPickingFilter.cs" />
+    <Compile Include="HCDInfo.cs" />
+    <Compile Include="HCDScoring.cs" />
+    <Compile Include="IntegralPeakArea.cs" />
+    <Compile Include="IRawFileReader.cs" />
+    <Compile Include="IsotopeProfileHelper.cs" />
+    <Compile Include="LCPeak.cs" />
+    <Compile Include="MascotParser\MascotDAT.cs" />
+    <Compile Include="MascotParser\Peptides.cs" />
+    <Compile Include="MascotParser\Query.cs" />
+    <Compile Include="MascotParser\Summary.cs" />
+    <Compile Include="MascotParser\Unimod.cs" />
+    <Compile Include="MSPeak.cs" />
+    <Compile Include="MSPoint.cs" />
+    <Compile Include="MSScan.cs" />
+    <Compile Include="LCPeakDetection.cs" />
+    <Compile Include="mzXMLRawReader.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="MassUtility.cs" />
+    <Compile Include="ThermoRawReader.cs" />
+    <Compile Include="Smooth\SavitzkyGolay.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(ProjectDir)$(OutDir)$(TargetFileName)"  "D:\BoxNet\!IncludeFiles"</PostBuildEvent>
+  </PropertyGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.TimeStamp" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
