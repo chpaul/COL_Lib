@@ -77,6 +77,8 @@
             this.label5 = new System.Windows.Forms.Label();
             this.dgTable = new System.Windows.Forms.DataGridView();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.label10 = new System.Windows.Forms.Label();
+            this.cboPepMutation = new System.Windows.Forms.ComboBox();
             this.chkEnzy_GlucE = new System.Windows.Forms.CheckBox();
             this.chkEnzy_Trypsin = new System.Windows.Forms.CheckBox();
             this.chkEnzy_GlucED = new System.Windows.Forms.CheckBox();
@@ -91,9 +93,12 @@
             this.btnGetPeptideMass = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.txtPeptideSeq = new System.Windows.Forms.TextBox();
+            this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.picGlycan = new System.Windows.Forms.PictureBox();
+            this.btnGlycanDraw = new System.Windows.Forms.Button();
+            this.txtIUPAC = new System.Windows.Forms.TextBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.label10 = new System.Windows.Forms.Label();
-            this.cboPepMutation = new System.Windows.Forms.ComboBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
@@ -110,6 +115,8 @@
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgTable)).BeginInit();
             this.tabPage5.SuspendLayout();
+            this.tabPage6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picGlycan)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -117,6 +124,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage5);
+            this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -143,6 +151,7 @@
             // 
             // splitContainer2.Panel1
             // 
+            this.splitContainer2.Panel1.Controls.Add(this.button1);
             this.splitContainer2.Panel1.Controls.Add(this.btnLoadRawCSMSL);
             this.splitContainer2.Panel1.Controls.Add(this.txtPeak);
             this.splitContainer2.Panel1.Controls.Add(this.txtScanNo_CSMSL);
@@ -638,6 +647,29 @@
             this.tabPage5.Text = "Peptide";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(17, 185);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(113, 13);
+            this.label10.TabIndex = 36;
+            this.label10.Text = "Allow peptide mutation";
+            this.label10.Click += new System.EventHandler(this.label10_Click);
+            // 
+            // cboPepMutation
+            // 
+            this.cboPepMutation.FormattingEnabled = true;
+            this.cboPepMutation.Items.AddRange(new object[] {
+            "No Mutation",
+            "Aspartic Acid(D) -> Asparagine (N)",
+            "Any -> Asparagine (N)"});
+            this.cboPepMutation.Location = new System.Drawing.Point(137, 182);
+            this.cboPepMutation.Name = "cboPepMutation";
+            this.cboPepMutation.Size = new System.Drawing.Size(202, 21);
+            this.cboPepMutation.TabIndex = 35;
+            this.cboPepMutation.SelectedIndexChanged += new System.EventHandler(this.cboPepMutation_SelectedIndexChanged);
+            // 
             // chkEnzy_GlucE
             // 
             this.chkEnzy_GlucE.AutoSize = true;
@@ -775,32 +807,57 @@
             this.txtPeptideSeq.Size = new System.Drawing.Size(199, 20);
             this.txtPeptideSeq.TabIndex = 0;
             // 
+            // tabPage6
+            // 
+            this.tabPage6.Controls.Add(this.picGlycan);
+            this.tabPage6.Controls.Add(this.btnGlycanDraw);
+            this.tabPage6.Controls.Add(this.txtIUPAC);
+            this.tabPage6.Location = new System.Drawing.Point(4, 22);
+            this.tabPage6.Name = "tabPage6";
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage6.Size = new System.Drawing.Size(877, 508);
+            this.tabPage6.TabIndex = 3;
+            this.tabPage6.Text = "GlycanDraw";
+            this.tabPage6.UseVisualStyleBackColor = true;
+            // 
+            // picGlycan
+            // 
+            this.picGlycan.Location = new System.Drawing.Point(6, 51);
+            this.picGlycan.Name = "picGlycan";
+            this.picGlycan.Size = new System.Drawing.Size(440, 340);
+            this.picGlycan.TabIndex = 2;
+            this.picGlycan.TabStop = false;
+            // 
+            // btnGlycanDraw
+            // 
+            this.btnGlycanDraw.Location = new System.Drawing.Point(452, 22);
+            this.btnGlycanDraw.Name = "btnGlycanDraw";
+            this.btnGlycanDraw.Size = new System.Drawing.Size(75, 23);
+            this.btnGlycanDraw.TabIndex = 1;
+            this.btnGlycanDraw.Text = "Draw";
+            this.btnGlycanDraw.UseVisualStyleBackColor = true;
+            this.btnGlycanDraw.Click += new System.EventHandler(this.btnGlycanDraw_Click);
+            // 
+            // txtIUPAC
+            // 
+            this.txtIUPAC.Location = new System.Drawing.Point(8, 25);
+            this.txtIUPAC.Name = "txtIUPAC";
+            this.txtIUPAC.Size = new System.Drawing.Size(438, 20);
+            this.txtIUPAC.TabIndex = 0;
+            // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // label10
+            // button1
             // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(17, 185);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(113, 13);
-            this.label10.TabIndex = 36;
-            this.label10.Text = "Allow peptide mutation";
-            this.label10.Click += new System.EventHandler(this.label10_Click);
-            // 
-            // cboPepMutation
-            // 
-            this.cboPepMutation.FormattingEnabled = true;
-            this.cboPepMutation.Items.AddRange(new object[] {
-            "No Mutation",
-            "Aspartic Acid(D) -> Asparagine (N)",
-            "Any -> Asparagine (N)"});
-            this.cboPepMutation.Location = new System.Drawing.Point(137, 182);
-            this.cboPepMutation.Name = "cboPepMutation";
-            this.cboPepMutation.Size = new System.Drawing.Size(202, 21);
-            this.cboPepMutation.TabIndex = 35;
-            this.cboPepMutation.SelectedIndexChanged += new System.EventHandler(this.cboPepMutation_SelectedIndexChanged);
+            this.button1.Location = new System.Drawing.Point(115, 13);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 92;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // frmMain
             // 
@@ -830,6 +887,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgTable)).EndInit();
             this.tabPage5.ResumeLayout(false);
             this.tabPage5.PerformLayout();
+            this.tabPage6.ResumeLayout(false);
+            this.tabPage6.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picGlycan)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -901,6 +961,11 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.ComboBox cboPepMutation;
+        private System.Windows.Forms.TabPage tabPage6;
+        private System.Windows.Forms.PictureBox picGlycan;
+        private System.Windows.Forms.Button btnGlycanDraw;
+        private System.Windows.Forms.TextBox txtIUPAC;
+        private System.Windows.Forms.Button button1;
     }
 }
 

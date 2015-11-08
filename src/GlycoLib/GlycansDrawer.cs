@@ -17,6 +17,8 @@ namespace COL.GlycoLib
         int MaxYAxis = 0;
         bool _isBW = false;
         float _ScaleFactor = 1.0f;
+
+        public GlycansDrawer(){}
         public GlycansDrawer(string argIUPAC)
         {
             _iupac = argIUPAC;
@@ -114,7 +116,7 @@ namespace COL.GlycoLib
                 }
             }
         }       
-        private Image GlycanCartoon(Glycan.Type argType)
+        public Image GlycanCartoon(Glycan.Type argType)
         {
 
             Bitmap glycan = new Bitmap(11 ,11 );

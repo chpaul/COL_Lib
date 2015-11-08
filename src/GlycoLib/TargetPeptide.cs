@@ -54,6 +54,19 @@ namespace COL.GlycoLib
             get { return _Modifications; }
             set { _Modifications = value; }
         }
+
+        public string ModificationString
+        {
+            get
+            {
+                string mod = "";
+                foreach (string key in _Modifications.Keys)
+                {
+                    mod += key + ":" + _Modifications[key].ToString() + ";";
+                }
+                return mod;
+            }
+        }
         public float EndTime
         {
             get { return _EndTime; }

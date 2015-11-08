@@ -215,6 +215,11 @@ namespace COL.GlycoLib
                                    _Sodium * Atoms.SodiumMass + 
                                    _Deuterium * Atoms.DeuteriumMass;
         }
+
+        public double MassWithoutWater
+        {
+            get { return _MonoMass - Atoms.HydrogenMass*2 - Atoms.OxygenMass; }
+        }
         public bool isPermethylated
         {
             get { return _Permethylated; }

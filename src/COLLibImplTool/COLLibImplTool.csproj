@@ -103,9 +103,9 @@
       <Project>{f491280e-32de-4ec8-97ad-bebb8eef8722}</Project>
       <Name>GlycoLib</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MassLibCSMSL\MassLibCSMSL.csproj">
-      <Project>{8f6eb98a-fb4d-4592-ae54-4ba9eb9eb834}</Project>
-      <Name>MassLibCSMSL</Name>
+    <ProjectReference Include="..\MassLibNative\MassLibNative.csproj">
+      <Project>{f8908c89-4077-49c6-b342-e06e1016d40b}</Project>
+      <Name>MassLibNative</Name>
     </ProjectReference>
     <ProjectReference Include="..\Prot_Lib\ProtLib.csproj">
       <Project>{c35dfa3f-cb11-41fb-80c6-a49231d2b413}</Project>

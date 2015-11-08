@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using COL.GlycoLib;
@@ -25,7 +26,10 @@ namespace COL.GlycoLib
         private string _IUPAC = "";
         private double _Score = 0.0;
         private float _IncompleteScore = 0;
-        private bool _IsComplete = false;
+        private bool _MatchWithPrecursorMW = false;
+        /// <summary>
+        /// Is the structure complete by substract precursor m/z? (add one extra glycan only)
+        /// </summary>
         private bool _IsCompleteByPrecursorDifference = false;
         private List<Tuple<MSPoint, string>> _CoreIDPeaks = new List<Tuple<MSPoint, string>>();
         private List<Tuple<MSPoint, string>> _BranchIDPeaks = new List<Tuple<MSPoint, string>>();
@@ -33,6 +37,9 @@ namespace COL.GlycoLib
         private string _peptideStr = "";
         private float _PrecursorMonoMass = 0;
         private TargetPeptide _targetPeptide;
+        private List<double> _SVMMatrices = new List<double>();
+        private int _SVMPredictedLabel;
+        private List<double> _SVMPredictedProb = new List<double>();
         //Constrator
         public GlycanStructure(Glycan argGlycan)
         {
@@ -59,23 +66,51 @@ namespace COL.GlycoLib
             _IUPAC = _tree.GetIUPACString();
         }
         //Properties
-        public bool IsCompleteSequenced
+        public bool MatchWithPrecursorMW
         {
-            get { return _IsComplete; }
-            set { _IsComplete = value; }
+            get { return _MatchWithPrecursorMW; }
+            set { _MatchWithPrecursorMW = value; }
         }
         public bool IsCompleteByPrecursorDifference
         {
             get { return _IsCompleteByPrecursorDifference; }
             set { _IsCompleteByPrecursorDifference = value; }
         }
+        /// <summary>
+        /// Label 1: Completed glycan and peptide (within 10PPM) 2: Completed glycan only (Y1+glycan matched with precursor) No Peptide 3: Partial glycan no peptide
+        /// </summary>
+        public int SVMPredictedLabel
+        {
+            get {return _SVMPredictedLabel;}
+            set { _SVMPredictedLabel = value; }
+        }
+        public List<double> SVMPrrdictedProbabilities
+        {
+            get {return _SVMPredictedProb;}
+            set { _SVMPredictedProb = value; }
+        }
+
+        public List<double> SVMMatrices
+        {
+            get
+            {
+                if (_SVMMatrices.Count == 0)
+                {
+                    _SVMMatrices = CreateSVMMatrices(); 
+                }
+                return _SVMMatrices;
+            }
+        }
         public double PPM
         {
             get
             {
-                
                 float glycopeptide = 0;
-                if (_peptideStr != "")
+                if (_targetPeptide!=null && _targetPeptide.PeptideMass != 0)
+                {
+                    glycopeptide = _targetPeptide.PeptideMass;
+                }
+                else if (_peptideStr != "")
                 {
                     ProtLib.AminoAcidMass AAMS = new AminoAcidMass();
                     glycopeptide = AAMS.GetMonoMW(_peptideStr,true);
@@ -102,8 +137,6 @@ namespace COL.GlycoLib
                     glycopeptide = glycopeptide + (Root.NoOfNeuAc) * GlycanMass.GetGlycanMass(Glycan.Type.NeuAc);
                     glycopeptide = glycopeptide + (Root.NoOfNeuGc) * GlycanMass.GetGlycanMass(Glycan.Type.NeuGc);
                 }
-
-
                 return MassUtility.GetMassPPM(_PrecursorMonoMass, glycopeptide);
             }
         }
@@ -149,6 +182,29 @@ namespace COL.GlycoLib
         {
             get { return _restGlycanString; }
             set { _restGlycanString = value; }
+        }
+
+        public string FullSequencedGlycanString
+        {
+            get
+            {
+                string _fullSeqGlycanString = "";
+                if (_restGlycanString == "")
+                {
+                    _fullSeqGlycanString = _tree.NoOfHexNac + "-" + _tree.NoOfHex + "-" + _tree.NoOfDeHex + "-" +
+                                           _tree.NoOfNeuAc + "-" + _tree.NoOfNeuGc;
+                }
+                else
+                {
+                    string[] appendGlycan = _restGlycanString.Split('-');
+                    _fullSeqGlycanString = (_tree.NoOfHexNac + Convert.ToInt32(appendGlycan[0])).ToString() + "-";
+                    _fullSeqGlycanString += (_tree.NoOfHex + Convert.ToInt32(appendGlycan[1])).ToString() + "-";
+                    _fullSeqGlycanString += (_tree.NoOfDeHex + Convert.ToInt32(appendGlycan[2])).ToString() + "-";
+                    _fullSeqGlycanString += (_tree.NoOfNeuAc + Convert.ToInt32(appendGlycan[3])).ToString() + "-";
+                    _fullSeqGlycanString += (_tree.NoOfNeuGc + Convert.ToInt32(appendGlycan[4])).ToString();
+                }
+                return _fullSeqGlycanString;
+            }
         }
         public GlycanTreeNode Root
         {
@@ -254,14 +310,6 @@ namespace COL.GlycoLib
         {
             get
             {
-                //float glycanMass = 0.0f;
-                //foreach (GlycanTreeNode T in _tree.GetListsofGlycanTree())
-                //{
-                //    //glycanMass = glycanMass + GlycoLib.GlycanMass.GetGlycanMasswithCharge(T.GlycanType, _tree.Charge);
-                //    glycanMass = glycanMass + GlycoLib.GlycanMass.GetGlycanMass(T.GlycanType);
-                //}
-                //glycanMass = (glycanMass + Atoms.ProtonMass * Charge) / Charge;
-                //return glycanMass;
                 return (GlycanMonoMass + MassLib.Atoms.ProtonMass * Charge) / Charge;
             }
         }
@@ -270,11 +318,21 @@ namespace COL.GlycoLib
             get
             {
                 float glycanMass = 0.0f;
-                glycanMass = glycanMass + _tree.NoOfHexNac * GlycanMass.GetGlycanMass(Glycan.Type.HexNAc);
-                glycanMass = glycanMass + _tree.NoOfHex * GlycanMass.GetGlycanMass(Glycan.Type.Hex);
-                glycanMass = glycanMass + _tree.NoOfDeHex * GlycanMass.GetGlycanMass(Glycan.Type.DeHex);
-                glycanMass = glycanMass + _tree.NoOfNeuAc * GlycanMass.GetGlycanMass(Glycan.Type.NeuAc);
-                glycanMass = glycanMass + _tree.NoOfNeuGc * GlycanMass.GetGlycanMass(Glycan.Type.NeuGc);
+                int[] appendGlycan = new int[5]{0,0,0,0,0};
+                if (_restGlycanString != "")
+                {
+                    string[] tmpGlycan = _restGlycanString.Split('-');
+                    for (int i = 0; i <= 4; i++)
+                    {
+                        appendGlycan[i] = Convert.ToInt32(tmpGlycan[i]);
+                    }
+                }
+
+                glycanMass = glycanMass + (_tree.NoOfHexNac +appendGlycan[0])* GlycanMass.GetGlycanMass(Glycan.Type.HexNAc);
+                glycanMass = glycanMass + (_tree.NoOfHex+appendGlycan[1] )* GlycanMass.GetGlycanMass(Glycan.Type.Hex);
+                glycanMass = glycanMass + (_tree.NoOfDeHex+appendGlycan[2] )* GlycanMass.GetGlycanMass(Glycan.Type.DeHex);
+                glycanMass = glycanMass + (_tree.NoOfNeuAc+ appendGlycan[3])* GlycanMass.GetGlycanMass(Glycan.Type.NeuAc);
+                glycanMass = glycanMass + (_tree.NoOfNeuGc + appendGlycan[4]) * GlycanMass.GetGlycanMass(Glycan.Type.NeuGc);
                 return glycanMass;
             }
         }
@@ -282,15 +340,7 @@ namespace COL.GlycoLib
         {
             get
             {
-                //float glycanMass = 0.0f;
-                //foreach (GlycanTreeNode T in _tree.GetListsofGlycanTree())
-                //{
-                //    glycanMass = glycanMass + GlycoLib.GlycanMass.GetGlycanAVGMass(T.GlycanType);
-                //}
-                //glycanMass = (glycanMass + Atoms.ProtonMass * Charge) / Charge;
-                //return glycanMass;
                 return (GlycanAVGMonoMass + MassLib.Atoms.ProtonMass * Charge) / Charge;
-
             }
         }
         public float GlycanAVGMonoMass
@@ -298,11 +348,20 @@ namespace COL.GlycoLib
             get
             {
                 float glycanMass = 0.0f;
-                glycanMass = glycanMass + _tree.NoOfHexNac*GlycanMass.GetGlycanAVGMass(Glycan.Type.HexNAc);
-                glycanMass = glycanMass + _tree.NoOfHex * GlycanMass.GetGlycanAVGMass(Glycan.Type.Hex);
-                glycanMass = glycanMass + _tree.NoOfDeHex * GlycanMass.GetGlycanAVGMass(Glycan.Type.DeHex);
-                glycanMass = glycanMass + _tree.NoOfNeuAc * GlycanMass.GetGlycanAVGMass(Glycan.Type.NeuAc);
-                glycanMass = glycanMass + _tree.NoOfNeuGc * GlycanMass.GetGlycanAVGMass(Glycan.Type.NeuGc);
+                int[] appendGlycan = new int[5] { 0, 0, 0, 0, 0 };
+                if (_restGlycanString != "")
+                {
+                    string[] tmpGlycan = _restGlycanString.Split('-');
+                    for (int i = 0; i <= 4; i++)
+                    {
+                        appendGlycan[i] = Convert.ToInt32(tmpGlycan[i]);
+                    }
+                }
+                glycanMass = glycanMass + (_tree.NoOfHexNac + appendGlycan[0]) * GlycanMass.GetGlycanAVGMass(Glycan.Type.HexNAc);
+                glycanMass = glycanMass + (_tree.NoOfHex + appendGlycan[1])* GlycanMass.GetGlycanAVGMass(Glycan.Type.Hex);
+                glycanMass = glycanMass + (_tree.NoOfDeHex + appendGlycan[2])* GlycanMass.GetGlycanAVGMass(Glycan.Type.DeHex);
+                glycanMass = glycanMass + (_tree.NoOfNeuAc + appendGlycan[3])* GlycanMass.GetGlycanAVGMass(Glycan.Type.NeuAc);
+                glycanMass = glycanMass + (_tree.NoOfNeuGc + appendGlycan[4]) * GlycanMass.GetGlycanAVGMass(Glycan.Type.NeuGc);
                 return glycanMass;
             }
         }
@@ -321,6 +380,57 @@ namespace COL.GlycoLib
                 default:
                     return NoOfHex;
             }
+        }
+        private List<double> CreateSVMMatrices()
+        {
+            List<double> matrixes = new List<double>();
+            int Peptide = 0;
+            if (PeptideSequence != null && PeptideSequence != "")
+            {
+                Peptide = 1;
+            }
+            
+            int fuc = 1;
+            int CoreYPeaks = CoreIDPeak.Count;
+            float CoreYScore = CoreScore;
+            if (!IUPACString.EndsWith("(DeHex-)HexNAc"))
+            {
+                CoreYPeaks = CoreIDPeak.Count - CoreIDPeak.Where(x => x.Item2.Contains("deHex")).ToList().Count;
+                foreach (var core in CoreIDPeak.Where(x => x.Item2.EndsWith("(DeHex-)HexNAc")))
+                {
+                    CoreYScore -= core.Item1.Intensity;
+                }
+                fuc = 0;
+            }
+            matrixes.Add(Peptide);
+            matrixes.Add(fuc);
+            matrixes.Add(NoOfTotalGlycan);
+            matrixes.Add(Convert.ToDouble(PPM.ToString("0.000")));
+            matrixes.Add(CoreYPeaks);
+            matrixes.Add(Convert.ToDouble(CoreYScore.ToString("0.000")));
+            matrixes.Add(BranchIDPeak.Count);
+            matrixes.Add(Convert.ToDouble(BranchScore.ToString("0.000")));
+
+            var CorePeaks = CoreIDPeak.Where(x => x.Item2 == "HexNAc").ToList();
+            matrixes.Add(Convert.ToDouble(CorePeaks.Count != 0 ? CorePeaks[0].Item1.Intensity.ToString("0.0000") : "0"));
+            CorePeaks = CoreIDPeak.Where(x => x.Item2 == "HexNAc-HexNAc").ToList();
+            matrixes.Add(Convert.ToDouble(CorePeaks.Count != 0 ? CorePeaks[0].Item1.Intensity.ToString("0.0000") : "0"));
+            CorePeaks = CoreIDPeak.Where(x => x.Item2 == "HexNAc-HexNAc-Hex").ToList();
+            matrixes.Add(Convert.ToDouble(CorePeaks.Count != 0 ? CorePeaks[0].Item1.Intensity.ToString("0.0000") : "0"));
+            CorePeaks = CoreIDPeak.Where(x => x.Item2 == "HexNAc-HexNAc-Hex-Hex").ToList();
+            matrixes.Add(Convert.ToDouble(CorePeaks.Count != 0 ? CorePeaks[0].Item1.Intensity.ToString("0.0000") : "0"));
+            CorePeaks = CoreIDPeak.Where(x => x.Item2 == "HexNAc-HexNAc-Hex-(Hex-)Hex").ToList();
+            matrixes.Add(Convert.ToDouble(CorePeaks.Count != 0 ? CorePeaks[0].Item1.Intensity.ToString("0.0000") : "0"));
+
+            if (MatchWithPrecursorMW)
+            {
+                matrixes.Add(1);
+            }
+            else
+            {
+                matrixes.Add(0);
+            }
+            return matrixes;
         }
         public int NoOfTotalGlycan
         {
@@ -371,7 +481,6 @@ namespace COL.GlycoLib
                 return CoreScore + BranchScore + InCompleteScore;
             }
         }
-
         public float CoreScore
         {
             get
@@ -379,7 +488,7 @@ namespace COL.GlycoLib
                 float score = 0;
                 foreach (Tuple<MSPoint, string> peak in _CoreIDPeaks)
                 {
-                    score = score + peak.Item1.Intensity;
+                    score += peak.Item1.Intensity;
                 }
                 return score;
             }

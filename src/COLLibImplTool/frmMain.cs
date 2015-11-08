@@ -556,6 +556,46 @@ namespace COLLibImplTool
 
         }
 
+        private void btnGlycanDraw_Click(object sender, EventArgs e)
+        {
+            GlycansDrawer draw = new GlycansDrawer();
+            picGlycan.Image = draw.GlycanCartoon(Glycan.Type.DeHex);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            StreamWriter sw = new StreamWriter(@"e:\tmp1.csv");
+            
+            ThermoRawReader TRaw = (ThermoRawReader)raw;
+            string[] TagArray = TRaw.GetTrailerExtraLabelArray(1);
+            //Title
+            string title = string.Join(",", TagArray);
+            sw.WriteLine("ScanNum,MSLevel,Title," + title);
+
+            for (int i = 1; i <= raw.NumberOfScans; i++)
+            {
+               
+                string Export = i.ToString() + ",";
+                Export += TRaw.GetMsLevel(i) + ",";
+                Export += TRaw.GetScanDescription(i) + ",";
+                if (TRaw.GetMsLevel(i) == 1)
+                {
+                    Export += "0,";
+                }
+                else
+                {
+                    Export += TRaw.GetParentScanNumber(i) + ",";
+                }
+                
+                for (int j = 0; j < TagArray.Length; j++)
+                {
+                    Export += TRaw.GetExtraValue(i, TagArray[j]) + ",";
+                }
+                sw.WriteLine(Export);
+            }
+            sw.Close();
+        }
+
 
     }
 }

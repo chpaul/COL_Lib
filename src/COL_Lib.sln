@@ -28,6 +28,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COLLibImplTool", "COLLibImp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COLLibImplTool_THRASH", "COLLibImplTool_THRASH\COLLibImplTool_THRASH.csproj", "{D4B08D91-0F1D-488A-BA5B-6D1A6431E66A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawReader", "..\..\RawReader\RawReader\RawReader.csproj", "{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassLibNative", "MassLibNative\MassLibNative.csproj", "{F8908C89-4077-49C6-B342-E06E1016D40B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +108,20 @@ Global
 		{D4B08D91-0F1D-488A-BA5B-6D1A6431E66A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4B08D91-0F1D-488A-BA5B-6D1A6431E66A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D4B08D91-0F1D-488A-BA5B-6D1A6431E66A}.Release|x86.ActiveCfg = Release|Any CPU
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Debug|x86.ActiveCfg = Debug|x86
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Debug|x86.Build.0 = Debug|x86
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Release|x86.ActiveCfg = Release|x86
+		{04CAFE89-DB81-4652-BBE1-DA2F71428CDA}.Release|x86.Build.0 = Release|x86
+		{F8908C89-4077-49C6-B342-E06E1016D40B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8908C89-4077-49C6-B342-E06E1016D40B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8908C89-4077-49C6-B342-E06E1016D40B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F8908C89-4077-49C6-B342-E06E1016D40B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8908C89-4077-49C6-B342-E06E1016D40B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8908C89-4077-49C6-B342-E06E1016D40B}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

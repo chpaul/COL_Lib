@@ -166,8 +166,13 @@ namespace COL.MassLib
             }
             //Peaks
             XmlNode Peaks = XmlScan.FirstChild;
-            int precision = Convert.ToInt32(Peaks.Attributes["precision"]);
-            List<MSPoint> tmp = ParsePeakNode(Peaks.InnerText, PeakCount);
+            while (Peaks.Name != "peaks")
+            {
+                Peaks =Peaks.NextSibling;
+            }
+            
+            int Precision = Convert.ToInt32(Peaks.Attributes["precision"].Value);
+            List<MSPoint> tmp = ParsePeakNode(Peaks.InnerText, PeakCount, Precision);
             float[] mz = new float[PeakCount];
             float[] intensity = new float[PeakCount];
 
@@ -273,7 +278,7 @@ namespace COL.MassLib
             return _scan;
         }
 
-        protected List<MSPoint> ParsePeakNode(string peakString, int peaksCount)
+        protected List<MSPoint> ParsePeakNode(string peakString, int peaksCount, int argPrecision)
         {
             int offset;
             try
@@ -282,26 +287,58 @@ namespace COL.MassLib
 
                 List<MSPoint> _points = new List<MSPoint>();
                 //float mz = 0.0f, intensity = 0.0f;
-                for (int i = 0; i < peaksCount; i++)
+                if (argPrecision == 32)
                 {
-
-                    //Array.Reverse(decoded, i * 8, 4);
-                    //Array.Reverse(decoded, i * 8 + 4, 4);
-                    XYPair val;
-                    val.x = 0;
-                    val.y = 0;
-                    offset = i * 8;
-                    val.b0 = decoded[offset + 7];
-                    val.b1 = decoded[offset + 6];
-                    val.b2 = decoded[offset + 5];
-                    val.b3 = decoded[offset + 4];
-                    val.b4 = decoded[offset + 3];
-                    val.b5 = decoded[offset + 2];
-                    val.b6 = decoded[offset + 1];
-                    val.b7 = decoded[offset];
-                    _points.Add(new MSPoint(val.x, val.y));
+                    for (int i = 0; i < peaksCount; i++)
+                    {
+                        XYPair val;
+                        val.x = 0;
+                        val.y = 0;
+                        offset = i*8;
+                        val.b0 = decoded[offset + 7];
+                        val.b1 = decoded[offset + 6];
+                        val.b2 = decoded[offset + 5];
+                        val.b3 = decoded[offset + 4];
+                        val.b4 = decoded[offset + 3];
+                        val.b5 = decoded[offset + 2];
+                        val.b6 = decoded[offset + 1];
+                        val.b7 = decoded[offset];
+                        _points.Add(new MSPoint(val.x, val.y));
+                    }
                 }
-
+                else if (argPrecision == 64)
+                {
+                    for (int i = 0; i < peaksCount; i++)
+                    {
+                        XYPair_double val;
+                        val.x = 0;
+                        val.y = 0;
+                        offset = i*16;
+                        val.b0 = decoded[offset + 15];
+                        val.b1 = decoded[offset + 14];
+                        val.b2 = decoded[offset + 13];
+                        val.b3 = decoded[offset + 12];
+                        val.b4 = decoded[offset + 11];
+                        val.b5 = decoded[offset + 10];
+                        val.b6 = decoded[offset + 9];
+                        val.b7 = decoded[offset + 8];
+                        val.b8 = decoded[offset + 7];
+                        val.b9 = decoded[offset + 6];
+                        val.b10 = decoded[offset + 5];
+                        val.b11 = decoded[offset + 4];
+                        val.b12 = decoded[offset + 3];
+                        val.b13 = decoded[offset + 2];
+                        val.b14 = decoded[offset + 1];
+                        val.b15 = decoded[offset];
+                        _points.Add(new MSPoint(
+                            Convert.ToSingle(val.x), 
+                            Convert.ToSingle(val.y)));
+                    }
+                }
+                else
+                {
+                    throw new Exception("Precision not support");
+                }
                 return _points;
             }
             catch (Exception e)
@@ -335,6 +372,47 @@ namespace COL.MassLib
             public float x;
             [FieldOffset(0)]
             public float y;
+        }
+        [System.Runtime.InteropServices.StructLayout(LayoutKind.Explicit)]
+        private struct XYPair_double
+        {
+            [FieldOffset(0)]
+            public byte b0;
+            [FieldOffset(1)]
+            public byte b1;
+            [FieldOffset(2)]
+            public byte b2;
+            [FieldOffset(3)]
+            public byte b3;
+            [FieldOffset(4)]
+            public byte b4;
+            [FieldOffset(5)]
+            public byte b5;
+            [FieldOffset(6)]
+            public byte b6;
+            [FieldOffset(7)]
+            public byte b7;
+            [FieldOffset(8)]
+            public byte b8;
+            [FieldOffset(9)]
+            public byte b9;
+            [FieldOffset(10)]
+            public byte b10;
+            [FieldOffset(11)]
+            public byte b11;
+            [FieldOffset(12)]
+            public byte b12;
+            [FieldOffset(13)]
+            public byte b13;
+            [FieldOffset(14)]
+            public byte b14;
+            [FieldOffset(15)]
+            public byte b15;
+
+            [FieldOffset(8)]
+            public double x;
+            [FieldOffset(0)]
+            public double y;
         }
         public void Dispose()
         {

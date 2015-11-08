@@ -248,10 +248,13 @@ namespace COL.MassLib
                 scan.ParentCharge = _raw.GetPrecusorCharge(argScanNo);
 
                 //Parent Mono
-                MSScan ParentScan = GetScanFromFile(scan.ParentScanNo);
-                int ClosedIdx = MassUtility.GetClosestMassIdx(ParentScan.MZs, scan.ParentMZ);
-                List<int> Peaks = FindPeakIdx(ParentScan.MZs, ClosedIdx, scan.ParentCharge, 10);
-                scan.ParentMonoMz = ParentScan.MZs[Peaks[0]];
+                if (scan.ParentScanNo != 0)
+                {
+                    MSScan ParentScan = GetScanFromFile(scan.ParentScanNo);
+                    int ClosedIdx = MassUtility.GetClosestMassIdx(ParentScan.MZs, scan.ParentMZ);
+                    List<int> Peaks = FindPeakIdx(ParentScan.MZs, ClosedIdx, scan.ParentCharge, 10);
+                    scan.ParentMonoMz = ParentScan.MZs[Peaks[0]];
+                }
             }
             #endregion  
             scan.IsCIDScan = IsCIDScan(argScanNo);

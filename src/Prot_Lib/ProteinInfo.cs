@@ -24,21 +24,56 @@ namespace COL.ProtLib
         }
         public List<string> NGlycopeptide(int argAllowMissCleavage, List<Protease.Type> argProteaseType, enumPeptideMutation argMutation)
         {
-            string MutatedPeptide = MutateSequence(_sequence,argMutation);
-            List<string> _cleavages = CreateCleavage(MutatedPeptide,argAllowMissCleavage, argProteaseType);
             List<string> _glycopep = new List<string>();
-            
+
+            //Native Part
+            List<string> _cleavages = CreateCleavage(_sequence, argAllowMissCleavage, argProteaseType);
             foreach (string pep in _cleavages)
             {
-                foreach(Match match in Regex.Matches(pep, "N[ARNDCEQGHILKMFSTWYV][S|T]", RegexOptions.IgnoreCase))
+                if (ContainSequon(pep) && !_glycopep.Contains(pep))
                 {
-                    if (!_glycopep.Contains(pep))
+                    _glycopep.Add(pep);
+                }
+            }
+            //Mutation Part
+            string MutatedPeptide = MutateSequence(_sequence,argMutation);
+           _cleavages = CreateCleavage(MutatedPeptide,argAllowMissCleavage, argProteaseType);
+          
+
+            foreach (string pep in _cleavages)
+            {
+                if (ContainSequon(pep) && !_glycopep.Contains(pep))
+                {
+                    _glycopep.Add(pep);
+                }
+            }
+            
+            return _glycopep;
+        }
+
+        public bool ContainSequon(string argDigustPeptide)
+        {
+            Regex sequon = new Regex("N[ARNDCEQGHILKMFSTWYV][S|T]", RegexOptions.IgnoreCase);  //NXS NXT  X!=P
+            
+            Match Sequon = sequon.Match(argDigustPeptide);
+            if (Sequon.Length != 0)
+            {
+                return true;
+            }
+            Regex sequonEnd = new Regex("N[ARNDCEQGHILKMFSTWYV]$", RegexOptions.IgnoreCase);  //NX NX  X!=P in the end
+            Match SequonEnd = sequonEnd.Match(argDigustPeptide); //Go to full sequence to check if the sequence contain S/T
+            if (SequonEnd.Length != 0)
+            {
+                int idx = _sequence.IndexOf(argDigustPeptide) + argDigustPeptide.Length;
+                if (idx < _sequence.Length)
+                {
+                    if (_sequence[idx] == 'S' || _sequence[idx] == 'T')
                     {
-                        _glycopep.Add(pep);
+                        return true;
                     }
                 }
             }
-            return _glycopep;
+            return false;
         }
         private string MutateSequence(string argSequence, enumPeptideMutation argMutation)
         {
