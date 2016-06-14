@@ -151,6 +151,12 @@ namespace COLLibImplTool
                     SB.Append("Precursor Charge:" + scan.ParentCharge + Environment.NewLine);
                     SB.Append("Precursor mono mass:" + scan.ParentMonoMW + Environment.NewLine + Environment.NewLine);
                 }
+                if (scan.IsHCDScan)
+                {
+                    HCDInfo HCD = ((ThermoRawReader) raw).GetHCDInfo(argMSScan);
+                    SB.Append("HCD Score:" + HCD.HCDScore.ToString("0.00")+Environment.NewLine);
+                    SB.Append("HCD Glycan Type:" + HCD.GlycanType + Environment.NewLine);
+                }
                 SB.Append("MS Peaks:" + scan.MSPeaks.Count + Environment.NewLine);
                 SB.Append("DeisotopeMZ\tPeak Intensity\tMost intense Mz\tMost intense int\t Cluster int"+Environment.NewLine);
                 foreach (MSPeak peak in scan.MSPeaks)
@@ -351,6 +357,7 @@ namespace COLLibImplTool
                                                      Convert.ToInt32(txtHex.Text),
                                                      Convert.ToInt32(txtFuc.Text),
                                                      Convert.ToInt32(txtSia.Text)));
+                
             }
             foreach (GlycanCompound gCompound in tmps)
             {
@@ -376,7 +383,7 @@ namespace COLLibImplTool
                                                          true,
                                                          LstAdducts,
                                                          Tag));
-
+                            Glycans[Glycans.Count - 1].PositiveCharge = chkChargeMode.Checked;
                         }
                     }
                 }
@@ -558,42 +565,51 @@ namespace COLLibImplTool
 
         private void btnGlycanDraw_Click(object sender, EventArgs e)
         {
-            GlycansDrawer draw = new GlycansDrawer();
-            picGlycan.Image = draw.GlycanCartoon(Glycan.Type.DeHex);
+            GlycansDrawer draw = new GlycansDrawer("HexNAc-(Hex-)HexNAc", false);
+            picGlycan.Image = draw.GetImage();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            StreamWriter sw = new StreamWriter(@"e:\tmp1.csv");
             
             ThermoRawReader TRaw = (ThermoRawReader)raw;
             string[] TagArray = TRaw.GetTrailerExtraLabelArray(1);
             //Title
-            string title = string.Join(",", TagArray);
-            sw.WriteLine("ScanNum,MSLevel,Title," + title);
-
+            int msCount = 0;
+            int msmsCount = 0;
+            int CIDcount = 0;
+            int HCDcount = 0;
             for (int i = 1; i <= raw.NumberOfScans; i++)
             {
-               
-                string Export = i.ToString() + ",";
-                Export += TRaw.GetMsLevel(i) + ",";
-                Export += TRaw.GetScanDescription(i) + ",";
+             
                 if (TRaw.GetMsLevel(i) == 1)
                 {
-                    Export += "0,";
+                    msCount += 1;
                 }
                 else
                 {
-                    Export += TRaw.GetParentScanNumber(i) + ",";
+                    msmsCount += 1;
+                    if (TRaw.IsCIDScan(i))
+                    {
+                        CIDcount += 1;
+                    }
+                    else
+                    {
+                        HCDcount += 1;
+                    }
                 }
-                
-                for (int j = 0; j < TagArray.Length; j++)
-                {
-                    Export += TRaw.GetExtraValue(i, TagArray[j]) + ",";
-                }
-                sw.WriteLine(Export);
             }
-            sw.Close();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string iupac = "Hex-(Hex-)(Hex-)Hex";
+            iupac = "HexNAc-HexNAc";
+            
+            COL.GlycoLib.GlycanStructure GS = new GlycanStructure(  new Glycan(Glycan.Type.HexNAc,2));
+            
+            
+           // Console.WriteLine(root.GetIUPACString());
         }
 
 

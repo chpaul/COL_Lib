@@ -32,6 +32,7 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.button1 = new System.Windows.Forms.Button();
             this.btnLoadRawCSMSL = new System.Windows.Forms.Button();
             this.txtPeak = new System.Windows.Forms.TextBox();
             this.txtScanNo_CSMSL = new System.Windows.Forms.TextBox();
@@ -54,6 +55,7 @@
             this.zedGraphControl1 = new ZedGraph.ZedGraphControl();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.chkChargeMode = new System.Windows.Forms.CheckBox();
             this.txtAdduct_user = new System.Windows.Forms.TextBox();
             this.chkAdduct_user = new System.Windows.Forms.CheckBox();
             this.chkLoadFile = new System.Windows.Forms.CheckBox();
@@ -98,7 +100,7 @@
             this.btnGlycanDraw = new System.Windows.Forms.Button();
             this.txtIUPAC = new System.Windows.Forms.TextBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
@@ -174,6 +176,16 @@
             this.splitContainer2.Size = new System.Drawing.Size(871, 502);
             this.splitContainer2.SplitterDistance = 208;
             this.splitContainer2.TabIndex = 92;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(115, 13);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 92;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // btnLoadRawCSMSL
             // 
@@ -387,6 +399,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.chkChargeMode);
             this.splitContainer1.Panel1.Controls.Add(this.txtAdduct_user);
             this.splitContainer1.Panel1.Controls.Add(this.chkAdduct_user);
             this.splitContainer1.Panel1.Controls.Add(this.chkLoadFile);
@@ -415,6 +428,18 @@
             this.splitContainer1.Size = new System.Drawing.Size(877, 508);
             this.splitContainer1.SplitterDistance = 78;
             this.splitContainer1.TabIndex = 1;
+            // 
+            // chkChargeMode
+            // 
+            this.chkChargeMode.AutoSize = true;
+            this.chkChargeMode.Checked = true;
+            this.chkChargeMode.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkChargeMode.Location = new System.Drawing.Point(655, 7);
+            this.chkChargeMode.Name = "chkChargeMode";
+            this.chkChargeMode.Size = new System.Drawing.Size(100, 17);
+            this.chkChargeMode.TabIndex = 2;
+            this.chkChargeMode.Text = "Positive Charge";
+            this.chkChargeMode.UseVisualStyleBackColor = true;
             // 
             // txtAdduct_user
             // 
@@ -623,6 +648,7 @@
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.button2);
             this.tabPage5.Controls.Add(this.label10);
             this.tabPage5.Controls.Add(this.cboPepMutation);
             this.tabPage5.Controls.Add(this.chkEnzy_GlucE);
@@ -849,15 +875,15 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // button1
+            // button2
             // 
-            this.button1.Location = new System.Drawing.Point(115, 13);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 92;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.button2.Location = new System.Drawing.Point(780, 24);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 1;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // frmMain
             // 
@@ -966,6 +992,8 @@
         private System.Windows.Forms.Button btnGlycanDraw;
         private System.Windows.Forms.TextBox txtIUPAC;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.CheckBox chkChargeMode;
+        private System.Windows.Forms.Button button2;
     }
 }
 

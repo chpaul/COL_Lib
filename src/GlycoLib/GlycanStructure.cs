@@ -406,8 +406,8 @@ namespace COL.GlycoLib
             matrixes.Add(fuc);
             matrixes.Add(NoOfTotalGlycan);
             matrixes.Add(Convert.ToDouble(PPM.ToString("0.000")));
-            matrixes.Add(CoreYPeaks);
-            matrixes.Add(Convert.ToDouble(CoreYScore.ToString("0.000")));
+            //matrixes.Add(CoreYPeaks);
+            //matrixes.Add(Convert.ToDouble(CoreYScore.ToString("0.000")));
             matrixes.Add(BranchIDPeak.Count);
             matrixes.Add(Convert.ToDouble(BranchScore.ToString("0.000")));
 
@@ -422,14 +422,14 @@ namespace COL.GlycoLib
             CorePeaks = CoreIDPeak.Where(x => x.Item2 == "HexNAc-HexNAc-Hex-(Hex-)Hex").ToList();
             matrixes.Add(Convert.ToDouble(CorePeaks.Count != 0 ? CorePeaks[0].Item1.Intensity.ToString("0.0000") : "0"));
 
-            if (MatchWithPrecursorMW)
-            {
-                matrixes.Add(1);
-            }
-            else
-            {
-                matrixes.Add(0);
-            }
+            //if (MatchWithPrecursorMW)
+            //{
+            //    matrixes.Add(1);
+            //}
+            //else
+            //{
+            //    matrixes.Add(0);
+            //}
             return matrixes;
         }
         public int NoOfTotalGlycan

@@ -22,6 +22,8 @@ namespace COL.MassLib
         private float _parentMonoMz = 0;
         private float _parentMonoMW = 0;
         private float _parentAVGMonoMW = 0;
+        private float _parentIntensity = 0;
+        private float _parentBasePeak = 0;
         private int _msLevel;
         private float _minIntensity;
         private float _maxIntensity;
@@ -178,6 +180,18 @@ namespace COL.MassLib
         {
             get { return _parentMz; }
             set { _parentMz = value; }
+        }
+
+        public float ParentIntensity
+        {
+            get { return _parentIntensity; }
+            set { _parentIntensity = value; }
+        }
+
+        public float ParentBasePeak
+        {
+            get { return _parentBasePeak; }
+            set { _parentBasePeak = value; }
         }
         public double Time
         {

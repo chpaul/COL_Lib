@@ -83,14 +83,14 @@ namespace COL.MassLib
 
             for (int i = 0; i < argPeaks.Count; i++)
             {
-                mzs[i] = argPeaks[i].MonoisotopicMZ;
+                mzs[i] = argPeaks[i].MonoMass;
                 intensities[i] = argPeaks[i].MonoIntensity;
             }
 
             for (int i = 0; i < 7; i++)
             {
                 double this_mz = marr_theoretical_peaks[i];
-                int ClosedIdx = MassUtility.GetClosestMassIdx(argPeaks, Convert.ToSingle(mzs[i]));
+                int ClosedIdx = MassUtility.GetClosestMassIdx(argPeaks, Convert.ToSingle(this_mz));
                 if (Math.Abs(this_mz - mzs[ClosedIdx]) < 0.1)
                 {
                     num_hcd_present++;

@@ -78,8 +78,14 @@ namespace COL.ProtLib
         }
         public float GetMonoMW(string argString, bool argCYS_CAM)
         {
+            return this.GetMonoMW(argString, argCYS_CAM, "X", 40);
+        }
+
+        public float GetMonoMW(string argString, bool argCYS_CAM, string argDecoyChar, double argDecoyMass)
+        {
             float SUM = 0.0f;
             string target = argString.ToUpper();
+            MWMapping.Add(argDecoyChar,argDecoyMass);
             for (int i = 0; i < target.Length; i++)
             {
                 if (argCYS_CAM)
@@ -99,12 +105,19 @@ namespace COL.ProtLib
                 }
             }
             SUM = SUM + Convert.ToSingle(MWMapping["H2O"]);
-            return SUM ;
+            return SUM;
         }
+
         public float GetAVGMonoMW(string argString, bool argCYS_CAM)
+        {
+            return this.GetAVGMonoMW(argString, argCYS_CAM, "X", 40);
+        }
+
+        public float GetAVGMonoMW(string argString, bool argCYS_CAM, string argDecoyChar, double argDecoyMass)
         {
             float SUM = 0.0f;
             string target = argString.ToUpper();
+            AVGMWMapping.Add(argDecoyChar,argDecoyMass);
             for (int i = 0; i < target.Length; i++)
             {
                 if (argCYS_CAM)
@@ -126,7 +139,6 @@ namespace COL.ProtLib
             SUM = SUM + Convert.ToSingle(AVGMWMapping["H2O"]);
             return SUM;
         }
-
         public float GetAminoAcidMass(string argInput, bool argIsAvg)
         {
             float mass = 0;

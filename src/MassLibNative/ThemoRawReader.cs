@@ -105,7 +105,7 @@ namespace COL.MassLib
         public bool IsHCDScan(int argScanNum)
         {
             string filter = GetScanDescription(argScanNum);
-            if (filter.ToLower().Contains("hcd"))
+            if (filter!=null && filter.ToLower().Contains("hcd"))
             {
                 return true;
             }
@@ -140,6 +140,13 @@ namespace COL.MassLib
             _rawConnection.GetFilterForScanNum(argScanNum, ref filter);
             return filter;
         }
+
+        public int GetLastScanNum()
+        {
+            int lastScan = 1;
+            _rawConnection.GetLastSpectrumNumber(ref lastScan);
+            return lastScan;
+        }
         private MSScan GetScanFromFile(int argScanNo, float argMinSN = 2)//, float argPPM = 6, int argMinPeakCount=3)
         {
 
@@ -160,7 +167,7 @@ namespace COL.MassLib
                     object peakFlags = null;
                     int arraySize = -1;
                     double centroidPeakWidth = double.NaN;
-                    _rawConnection.GetMassListFromScanNum(ref argScanNo, null, 0, 0, 0,1, ref centroidPeakWidth, ref massList, ref peakFlags, ref arraySize);
+                    _rawConnection.GetMassListFromScanNum(ref argScanNo, null, 0, 0, 0,0, ref centroidPeakWidth, ref massList, ref peakFlags, ref arraySize);
                     peakData = (double[,])massList;                
                 }
                 else
@@ -176,28 +183,38 @@ namespace COL.MassLib
             {
                 List<float> MzsAboveSN = new List<float>();
                 List<float> IntensitysAboveSN = new List<float>();
-                for (int i = 0; i < peakData.GetLength(1); i++)
-                {
-                    scan.RawMZs[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.MZ, i]);
-                    scan.RawIntensities[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.Intensity, i]);
-                    double Noise = peakData[(int) RawLabelDataColumn.NoiseLevel, i];
-                    double SN = 0;
-                    if (Noise.Equals(0))
+               
+                
+                    for (int i = 0; i < peakData.GetLength(1); i++)
                     {
-                        SN = float.NaN;
+                        scan.RawMZs[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.MZ, i]);
+                        scan.RawIntensities[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.Intensity, i]);
+                        if (peakData.GetLength(0) >= 4) //Data contain SN
+                        {
+                            double Noise = peakData[(int) RawLabelDataColumn.NoiseLevel, i];
+                            double SN = 0;
+                            if (Noise.Equals(0))
+                            {
+                                SN = float.NaN;
+                            }
+                            else
+                            {
+                                SN = scan.RawIntensities[i]/Noise;
+                            }
+                            if (SN >= tolSN)
+                            {
+                                MzsAboveSN.Add(scan.RawMZs[i]);
+                                IntensitysAboveSN.Add(scan.RawIntensities[i]);
+                            }
+                        }
+                        else
+                        {
+                            MzsAboveSN.Add(scan.RawMZs[i]);
+                            IntensitysAboveSN.Add(scan.RawIntensities[i]);
+                        }
                     }
-                    else
-                    {
-                        SN = scan.RawIntensities[i]/Noise;
-                    }
-                    if (SN >= tolSN)
-                    {
-                        MzsAboveSN.Add(scan.RawMZs[i]);
-                        IntensitysAboveSN.Add(scan.RawIntensities[i]);
-                    }
-                }
-                scan.MZs = MzsAboveSN.ToArray();
-                scan.Intensities = IntensitysAboveSN.ToArray();
+                    scan.MZs = MzsAboveSN.ToArray();
+                    scan.Intensities = IntensitysAboveSN.ToArray();
             }
             else // MS/MS
             {
@@ -226,7 +243,8 @@ namespace COL.MassLib
                     peakBefore = foundPeak - (1 / (float)scan.ParentCharge);
                     foundPeak = parentScan.MZs.OrderBy(x => Math.Abs(x - peakBefore)).ToList()[0];
                 }
-
+                scan.ParentBasePeak = parentScan.MaxIntensity;
+                scan.ParentIntensity = parentScan.RawIntensities[parentScan.RawMZs.ToList().IndexOf(scan.ParentMonoMz)];
             }
 
        
@@ -309,6 +327,10 @@ namespace COL.MassLib
 
         public HCDInfo GetHCDInfo(int argScanNum)
         {
+            if (argScanNum > GetLastScanNum() || !IsHCDScan(argScanNum))
+            {
+                return null;
+            }
             HCDScoring Scoring = new HCDScoring();
             MSScan scan = ReadScan(argScanNum);
 
