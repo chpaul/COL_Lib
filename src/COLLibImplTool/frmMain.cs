@@ -389,7 +389,7 @@ namespace COLLibImplTool
                                                          true,
                                                          LstAdducts,
                                                          Tag));
-                            
+                            Glycans[Glycans.Count - 1].PositiveCharge = chkChargeMode.Checked;
                             Glycans[Glycans.Count - 1].PositiveCharge = chkChargeMode.Checked;
                             double a = Glycans[Glycans.Count - 1].MZ;
                             double a1 = Glycans[Glycans.Count - 1].MZ;
@@ -583,6 +583,8 @@ namespace COLLibImplTool
 
         private void btnGlycanDraw_Click(object sender, EventArgs e)
         {
+            GlycansDrawer draw = new GlycansDrawer("HexNAc-(Hex-)HexNAc", false);
+            picGlycan.Image = draw.GetImage();
             GlycansDrawer draw = new GlycansDrawer();
             picGlycan.Image = draw.GlycanCartoon(Glycan.Type.DeHex);
         }
@@ -596,16 +598,23 @@ namespace COLLibImplTool
             int msCount = 0;
             int msmsCount = 0;
             int CIDcount = 0;
+            int msCount = 0;
+            int msmsCount = 0;
+            int CIDcount = 0;
+            int HCDcount = 0;
             int HCDcount = 0;
             for (int i = 1; i <= raw.NumberOfScans; i++)
             {
              
+             
                 if (TRaw.GetMsLevel(i) == 1)
                 {
+                    msCount += 1;
                     msCount += 1;
                 }
                 else
                 {
+                    msmsCount += 1;
                     msmsCount += 1;
                     if (TRaw.IsCIDScan(i))
                     {
@@ -615,8 +624,21 @@ namespace COLLibImplTool
                     {
                         HCDcount += 1;
                     }
+                    }
+                }
                 }
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string iupac = "Hex-(Hex-)(Hex-)Hex";
+            iupac = "HexNAc-HexNAc";
+            
+            COL.GlycoLib.GlycanStructure GS = new GlycanStructure(  new Glycan(Glycan.Type.HexNAc,2));
+            
+            
+           // Console.WriteLine(root.GetIUPACString());
         }
 
 

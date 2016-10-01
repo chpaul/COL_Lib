@@ -187,6 +187,16 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(115, 13);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 92;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // btnLoadRawCSMSL
             // 
             this.btnLoadRawCSMSL.Location = new System.Drawing.Point(3, 13);
@@ -442,6 +452,18 @@
             this.chkChargeMode.Text = "Positive Charge";
             this.chkChargeMode.UseVisualStyleBackColor = true;
             // 
+            // chkChargeMode
+            // 
+            this.chkChargeMode.AutoSize = true;
+            this.chkChargeMode.Checked = true;
+            this.chkChargeMode.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkChargeMode.Location = new System.Drawing.Point(655, 7);
+            this.chkChargeMode.Name = "chkChargeMode";
+            this.chkChargeMode.Size = new System.Drawing.Size(100, 17);
+            this.chkChargeMode.TabIndex = 2;
+            this.chkChargeMode.Text = "Positive Charge";
+            this.chkChargeMode.UseVisualStyleBackColor = true;
+            // 
             // txtAdduct_user
             // 
             this.txtAdduct_user.Location = new System.Drawing.Point(402, 27);
@@ -649,6 +671,7 @@
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.button2);
             this.tabPage5.Controls.Add(this.label10);
             this.tabPage5.Controls.Add(this.cboPepMutation);
             this.tabPage5.Controls.Add(this.chkEnzy_GlucE);
@@ -993,6 +1016,7 @@
         private System.Windows.Forms.Button btnGlycanDraw;
         private System.Windows.Forms.TextBox txtIUPAC;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.CheckBox chkChargeMode;
         private System.Windows.Forms.CheckBox chkChargeMode;
         private System.Windows.Forms.RadioButton rdoHDEAT;
     }
