@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Markup;
@@ -38,6 +39,7 @@ namespace COL.GlycoLib
         private float _LinearRegSlope;
         private float _LinearRegIntercept ;
         private bool _HasLinearRegParemeters = false;
+        private bool _PositiveCharge = true;
         public GlycanCompound(int argHexNac, int argHex, int argDeHex, int argSialic)
         : this(argHexNac, argHex, argDeHex, argSialic, false, false, false, false, false) {}
         
@@ -66,6 +68,11 @@ namespace COL.GlycoLib
         {
             get { return _Adducts; }
         }
+        public bool PositiveCharge
+        {
+            get { return _PositiveCharge; }
+            set { _PositiveCharge = value; }
+        }
         private float AdductMass
         {
             get {
@@ -85,7 +92,15 @@ namespace COL.GlycoLib
                 CalcMass();
                 if (Charge != 0)
                 {
-                    return (_MonoMass + AdductMass) / (double)Charge;
+                    if (_PositiveCharge)
+                    {
+                        return (_MonoMass + AdductMass)/(double) Charge;
+                    }
+                    else
+                    {
+                        Tuple<string, float, int> Proton = _Adducts.Where(x => x.Item1 == "H").ToArray()[0];
+                        return (_MonoMass - Proton.Item2*Proton.Item3)/(double) Proton.Item3;
+                    }
                 }
                 else
                 {
@@ -507,6 +522,25 @@ namespace COL.GlycoLib
                         _Nitrogen = _Nitrogen + 2 +( _Sia * 1);
                         _Oxygen = _Oxygen - (_Sia * 1);
                         break;
+                    /*HDEAT
+                     * Light C11H23N7　
+                     * Heavy C11H3D20N7
+                     * 
+                     */
+                    case enumLabelingTag.HDEAT_Light:
+                        _Carbon += 11;
+                        _Hydrogen += 21;
+                        _Nitrogen += 7;
+                        _Oxygen -= 1;
+                        break;
+                    case enumLabelingTag.HDEAT_Heavy:
+                        _Carbon += 11;
+                        _Hydrogen += 3;
+                        _Nitrogen += 7;
+                        _Deuterium = 20;
+                        _Oxygen -= 1;
+                        break;
+
                 }
             }
             if (_isSodium)
