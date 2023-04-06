@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using MSFileReaderLib;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
+
+using ThermoRawFileReader;
+
 
 namespace COL.MassLib
 {
@@ -18,76 +16,39 @@ namespace COL.MassLib
 
     public class ThermoRawReader : IRawFileReader,IDisposable
     {
-
+        
         bool disposed = false;
         private string _fullFilePath;
         private float tolPPM = 30;
         private float tolSN = 2;
         private float tolMinPeakCount;
-        private enum RawLabelDataColumn
-        {
-            MZ = 0,
-            Intensity = 1,
-            Resolution = 2,
-            NoiseBaseline = 3,
-            NoiseLevel = 4,
-            Charge = 5
-        }
 
-        public enum ThermoMzAnalyzer
-        {
-            None = -1,
-            ITMS = 0,
-            TQMS = 1,
-            SQMS = 2,
-            TOFMS = 3,
-            FTMS = 4,
-            Sector = 5
-        }
-
-        public enum Smoothing
-        {
-            None = 0,
-            Boxcar = 1,
-            Gauusian = 2
-        }
-        private IXRawfile5 _rawConnection;
+        XRawFileIO reader;
 
         public ThermoRawReader(string argFullPath)
         {
-            
-            //Check if XRawfle2.dll exist
-            CheckDLL();
-
-
-
+            reader = new XRawFileIO(argFullPath, true);            
             _fullFilePath = argFullPath;
-            //Open
-            _rawConnection = (IXRawfile5)new MSFileReader_XRawfile();
-            _rawConnection.Open(_fullFilePath);
-            _rawConnection.SetCurrentController(0, 1); // first 0 is for mass spectrometer
         }
         public int NumberOfScans
         {
             get
             {
-                int spectrumNumber = 0;
-                _rawConnection.GetLastSpectrumNumber(ref spectrumNumber);
-                return spectrumNumber;
+                return reader.GetNumScans();
             }
         }
-        public int GetMsLevel(int argScan)
+        public int GetMsLevel(int argScanNum)
         {
-            int msnOrder = 0;
-            _rawConnection.GetMSOrderForScanNum(argScan, ref msnOrder);
-            return msnOrder;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return scanInfo.MSLevel;
         }
 
-        public double GetRetentionTime(int argScanNo)
+        public double GetRetentionTime(int argScanNum)
         {
-            double retentionTime = 0;
-            _rawConnection.RTFromScanNum(argScanNo, ref retentionTime);
-            return retentionTime;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return scanInfo.RetentionTime;
         }
         public string RawFilePath
         {
@@ -95,34 +56,21 @@ namespace COL.MassLib
         }
         public bool IsCIDScan(int argScanNum)
         {
-            string filter = GetScanDescription(argScanNum);
-            if (filter.ToLower().Contains("cid"))
-            {
-                return true;
-            }
-            return false;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return scanInfo.ActivationType == ActivationTypeConstants.CID ? true : false;            
         }
         public bool IsHCDScan(int argScanNum)
         {
-            string filter = GetScanDescription(argScanNum);
-            if (filter!=null && filter.ToLower().Contains("hcd"))
-            {
-                return true;
-            }
-            return false;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return scanInfo.ActivationType == ActivationTypeConstants.HCD ? true : false;
         }
         public bool IsFTScan(int argScanNum)
         {
-            string filter = GetScanDescription(argScanNum);
-            if (filter.ToLower().Contains("ms2"))
-            {
-                return false;
-            }
-            if (filter.ToLower().Contains("ft"))
-            {
-                return true;
-            }
-            return false;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return scanInfo.IsFTMS;
         }
         public float PPM
         {
@@ -136,121 +84,61 @@ namespace COL.MassLib
         }
         public string GetScanDescription(int argScanNum)
         {
-            string filter = null;
-            _rawConnection.GetFilterForScanNum(argScanNum, ref filter);
-            return filter;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return scanInfo.ToString();
         }
 
         public int GetLastScanNum()
         {
-            int lastScan = 1;
-            _rawConnection.GetLastSpectrumNumber(ref lastScan);
-            return lastScan;
+            return reader.ScanEnd;
         }
-        private MSScan GetScanFromFile(int argScanNo, float argMinSN = 2)//, float argPPM = 6, int argMinPeakCount=3)
+        private MSScan GetScanFromFile(int argScanNum, float argMinSN = 2)//, float argPPM = 6, int argMinPeakCount=3)
         {
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
 
-
-            int mslevel = GetMsLevel(argScanNo);
+            int mslevel = GetMsLevel(argScanNum);
             tolSN = argMinSN;
-            MSScan scan = new MSScan(argScanNo);
-            scan.MsLevel = GetMsLevel(argScanNo);
-            scan.Time = GetRetentionTime(argScanNo);
-            scan.ScanHeader =  GetScanDescription(argScanNo);
+            MSScan scan = new MSScan(argScanNum);
+            scan.MsLevel = GetMsLevel(argScanNum);
+            scan.Time = GetRetentionTime(argScanNum);
+            scan.ScanHeader =  GetScanDescription(argScanNum);
 
-            
+            double[] mzs;
+            double[] intensities;
+            reader.GetScanData(argScanNum, out mzs, out intensities);
+            scan.RawMZs = mzs.Select(x => (float)x).ToArray();
+            scan.RawIntensities = intensities.Select(x => (float)x).ToArray();
 
-            double[,] peakData;
-                if (GetMzAnalyzer(argScanNo) == ThermoMzAnalyzer.ITMS) //Low Res
-                {
-                    object massList = null;
-                    object peakFlags = null;
-                    int arraySize = -1;
-                    double centroidPeakWidth = double.NaN;
-                    _rawConnection.GetMassListFromScanNum(ref argScanNo, null, 0, 0, 0,0, ref centroidPeakWidth, ref massList, ref peakFlags, ref arraySize);
-                    peakData = (double[,])massList;                
-                }
-                else
-                {
-                    object labels = null;
-                    object flags = null;
-                    _rawConnection.GetLabelData(ref labels, ref flags, ref argScanNo);
-                    peakData = (double[,])labels;
-                }
-                scan.RawMZs = new float[peakData.GetLength(1)];
-                scan.RawIntensities = new float[peakData.GetLength(1)];
             if (mslevel == 1)
             {
-                List<float> MzsAboveSN = new List<float>();
-                List<float> IntensitysAboveSN = new List<float>();
-               
-                
-                    for (int i = 0; i < peakData.GetLength(1); i++)
-                    {
-                        scan.RawMZs[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.MZ, i]);
-                        scan.RawIntensities[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.Intensity, i]);
-                        if (peakData.GetLength(0) >= 4) //Data contain SN
-                        {
-                            double Noise = peakData[(int) RawLabelDataColumn.NoiseLevel, i];
-                            double SN = 0;
-                            if (Noise.Equals(0))
-                            {
-                                SN = float.NaN;
-                            }
-                            else
-                            {
-                                SN = scan.RawIntensities[i]/Noise;
-                            }
-                            if (SN >= tolSN)
-                            {
-                                MzsAboveSN.Add(scan.RawMZs[i]);
-                                IntensitysAboveSN.Add(scan.RawIntensities[i]);
-                            }
-                        }
-                        else
-                        {
-                            MzsAboveSN.Add(scan.RawMZs[i]);
-                            IntensitysAboveSN.Add(scan.RawIntensities[i]);
-                        }
-                    }
-                    scan.MZs = MzsAboveSN.ToArray();
-                    scan.Intensities = IntensitysAboveSN.ToArray();
+
+                scan.MZs = scan.RawMZs;
+                scan.Intensities = scan.RawIntensities;
             }
             else // MS/MS
             {
-                scan.MZs = new float[peakData.GetLength(1)];
-                scan.Intensities = new float[peakData.GetLength(1)];
-                for (int i = 0; i < peakData.GetLength(1); i++)
-                {
-                    scan.MZs[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.MZ, i]);
-                    scan.Intensities[i] = Convert.ToSingle(peakData[(int) RawLabelDataColumn.Intensity, i]);
-                }
-                scan.ParentScanNo = GetParentScanNumber(argScanNo);
-                scan.ParentMZ = GetPrecusorMz(argScanNo);
-                scan.ParentCharge = GetPrecusorCharge(argScanNo);
+                var parentScanInfo = new clsScanInfo(GetParentScanNumber(argScanNum));
+                reader.GetScanInfo(GetParentScanNumber(argScanNum), out parentScanInfo);
+
+                scan.MZs = scan.RawMZs;
+                scan.Intensities = scan.RawIntensities;
+
+
+                scan.ParentScanNo = parentScanInfo.ScanNumber;
+                scan.ParentMZ = (float)scanInfo.ParentIonMonoisotopicMZ;
+                scan.ParentCharge = scanInfo.ChargeState;
                 
-                //Sometime get wrong value
-                //scan.ParentMonoMz = Convert.ToSingle(GetExtraValue(argScanNo, "Monoisotopic M/Z:"));
-                //Find in raw data
-                scan.ParentMonoMz = GetPrecusorMz(argScanNo);
-                MSScan parentScan = GetScanFromFile(scan.ParentScanNo);
-                float peakBefore = scan.ParentMZ - (1/(float) scan.ParentCharge);
-                float foundPeak = parentScan.RawMZs.OrderBy(x => Math.Abs(x - peakBefore)).ToList()[0];
-                while (MassUtility.GetMassPPM(foundPeak, peakBefore) <= 10) //10PPM
-                {
-                    //Find another
-                    scan.ParentMonoMz = foundPeak;
-                    peakBefore = foundPeak - (1 / (float)scan.ParentCharge);
-                    foundPeak = parentScan.MZs.OrderBy(x => Math.Abs(x - peakBefore)).ToList()[0];
-                }
-                scan.ParentBasePeak = parentScan.MaxIntensity;
-                scan.ParentIntensity = parentScan.RawIntensities[parentScan.RawMZs.ToList().IndexOf(scan.ParentMonoMz)];
+                scan.ParentMonoMz = scan.ParentMZ;
+                scan.ParentBasePeak = (float)parentScanInfo.BasePeakIntensity;
+                scan.ParentIntensity = (float)scanInfo.TotalIonCurrent;
             }
 
        
-            scan.IsCIDScan = IsCIDScan(argScanNo);
-            scan.IsHCDScan = IsHCDScan(argScanNo);
-            scan.IsFTScan = IsFTScan(argScanNo);
+            scan.IsCIDScan = IsCIDScan(argScanNum);
+            scan.IsHCDScan = IsHCDScan(argScanNum);
+            scan.IsFTScan = IsFTScan(argScanNum);
             return scan;
         }
 
@@ -287,42 +175,27 @@ namespace COL.MassLib
 
         public int GetParentScanNumber(int argScanNum)
         {
+
             if (GetMsLevel(argScanNum) == 1)
                 return 0;
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            reader.GetScanInfo(scanInfo.ParentScan, out scanInfo);
+            return scanInfo.ScanNumber;
 
-            
-            object parentScanNumber = GetExtraValue(argScanNum, "Master Scan Number:");
-            int scanNumber = Convert.ToInt32(parentScanNumber);
-            
-            if (scanNumber == 0)
-            {
-                int masterIndex = Convert.ToInt32(GetExtraValue(argScanNum, "Master Index:"));
-                if (masterIndex == 0)
-                    throw new ArgumentException("Scan Number " + argScanNum + " has no parent");
 
-                for (int i = argScanNum - 1; i >= 1; i--)
-                {
-                    int currentScanEvent = Convert.ToInt32(GetExtraValue(i, "Scan Event:"));
-                    if (currentScanEvent == masterIndex)
-                    {
-                        scanNumber = i;
-                        break;
-                    }
-                }
-                //int scanIndex = Convert.ToInt32(GetExtraValue(argScanNum, "Scan Event:"));
-                //scanNumber = argScanNum - scanIndex + masterIndex;
-            }
-            return scanNumber;
         }
         public  float GetPrecusorMz(int argScanNum, int argMsLevel = 2)
         {
-            double mz = double.NaN;
-            _rawConnection.GetPrecursorMassForScanNum(argScanNum, argMsLevel, ref mz);
-            return Convert.ToSingle(mz);
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(argScanNum, out scanInfo);
+            return Convert.ToSingle(scanInfo.ParentIonMZ);
         }
         public int GetPrecusorCharge(int argScanNum, int argMSLevel = 2)
         {
-            return Convert.ToInt16(GetExtraValue(argScanNum, "Charge State:"));
+            var scanInfo = new clsScanInfo(argScanNum);
+            reader.GetScanInfo(GetParentScanNumber(argScanNum), out scanInfo);
+            return scanInfo.ChargeState;
         }
 
         public HCDInfo GetHCDInfo(int argScanNum)
@@ -359,20 +232,7 @@ namespace COL.MassLib
                 }
             }
             return scans;
-        }
-        public object GetExtraValue(int argScanNum, string filter)
-        {
-            object value = null;
-            _rawConnection.GetTrailerExtraValueForScanNum(argScanNum, filter, ref value);
-            return value;
-        }
-        public string[] GetTrailerExtraLabelArray(int argScanNum)
-        {
-            object arraylist = null;
-            int arraySize = 0;
-            _rawConnection.GetTrailerExtraLabelsForScanNum(argScanNum, ref arraylist, ref arraySize);
-            return (string[])arraylist;
-        }
+        }        
         public void Dispose()
         {
             Dispose(true);
@@ -386,7 +246,7 @@ namespace COL.MassLib
             if (disposing)
             {
                 // Free any other managed objects here. 
-                _rawConnection.Close();
+                reader.CloseRawFile();
             }
             // Free any unmanaged objects here. 
             disposed = true;
@@ -459,83 +319,6 @@ namespace COL.MassLib
             }
 
             return Peak;
-        }
-
-   
-        private void CheckDLL()
-        {
-            //Store resource file into disk
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            string RunningFolder = Environment.CurrentDirectory;
-            string DllLocation = Environment.GetEnvironmentVariable("ProgramFiles");
-            
-            if (Environment.Is64BitOperatingSystem)
-            {
-                DllLocation = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-            }
-            DllLocation += "\\Thermo\\MSFileReader";
-
-            List<string> lstFiles = new List<string>();
-            lstFiles.Add( "XRawfile2.dll");
-            lstFiles.Add("fileio.dll");
-            lstFiles.Add("fregistry.dll");
-
-            foreach (string strFileName in lstFiles)
-            {
-                //if (!File.Exists(RunningFolder + "\\" + strFileName))
-                //{
-                //    Stream input = assembly.GetManifestResourceStream("COL.MassLib.Resources."+strFileName);
-                //    Stream output = File.Create(RunningFolder + "\\" + strFileName);
-                //    input.CopyTo(output);
-                //    output.Close();
-                //}
-                if (!File.Exists(DllLocation + "\\" + strFileName ))
-                {
-                    MessageBox.Show(strFileName + " not found, program will copy and install to Program File Folder");
-                    File.Copy(RunningFolder + "\\" + strFileName , DllLocation + "\\" + strFileName );
-                    Registar_Dlls(DllLocation + "\\" + strFileName );
-                }
-            }
-        }
-        public static void Registar_Dlls(string filePath)
-        {
-            try
-            {
-                //'/s' : Specifies regsvr32 to run silently and to not display any message boxes.
-                string fileinfo = "/s" + " " + "\"" + filePath + "\"";
-                Process reg = new Process();
-                //This file registers .dll files as command components in the registry.
-                reg.StartInfo.FileName = "regsvr32.exe";
-                reg.StartInfo.Arguments = fileinfo;
-                reg.StartInfo.UseShellExecute = false;
-                reg.StartInfo.CreateNoWindow = true;
-                reg.StartInfo.RedirectStandardOutput = true;
-                reg.Start();
-                reg.WaitForExit();
-                reg.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-        public ThermoMzAnalyzer GetMzAnalyzer(int spectrumNumber)
-        {
-            int mzanalyzer = 0;
-            _rawConnection.GetMassAnalyzerTypeForScanNum(spectrumNumber, ref mzanalyzer);
-            return (ThermoMzAnalyzer) mzanalyzer;
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct PrecursorInfo
-        {
-            [MarshalAs(UnmanagedType.I4)]
-            public int scannumber;
-             [MarshalAs(UnmanagedType.R8)]
-            public double isolationmass;
-             [MarshalAs(UnmanagedType.I4)]
-             public int chargestate;
-            [MarshalAs(UnmanagedType.R8)]
-             public double monoisotopicmass;        
         }
     }
 }
